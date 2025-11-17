@@ -56,8 +56,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: "https://ironic-gym-frontend.vercel.app/success",
-      cancel_url: "https://ironic-gym-frontend.vercel.app/cancel",
+      success_url: "https://ironicgym.com/success",
+      cancel_url: "https://ironicgym.com/cancel",
+
     });
 
     res.json({ url: session.url });
