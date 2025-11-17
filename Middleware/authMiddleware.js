@@ -1,7 +1,7 @@
 // Middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const JWT_SECRET = "supersecretkey"; // MUST MATCH authRoutes.js
+const JWT_SECRET = process.env.JWT_SECRET; // MUST MATCH authRoutes.js
 
 const protect = async (req, res, next) => {
   let token;
