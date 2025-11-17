@@ -14,7 +14,14 @@ const orderRoutes = require("./Routes/orderRoutes");
 
 // ✅ Middlewares
 app.use(express.json());
-app.use(cors({ origin: "https://ironic-gym-frontend.vercel.app", credentials: true }));
+app.use(cors({
+  origin: [
+    "https://ironicgym.com",
+    "https://www.ironicgym.com",
+    "https://ironic-gym-frontend.vercel.app"
+  ],
+  credentials: true
+}));
 // ✅ MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
