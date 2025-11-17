@@ -8,11 +8,13 @@ const nodemailer = require("nodemailer"); // 1. IMPORT NODEMAILER
 // 2. SET UP THE EMAIL TRANSPORTER
 // (This is copied from your authRoutes.js)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+    pass: process.env.EMAIL_PASS
+  }
 });
 
 // @desc    Create a new order (the "receipt")
