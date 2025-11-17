@@ -27,11 +27,12 @@ router.post("/send-otp", async (req, res) => {
 
     // ⭐ SEND EMAIL USING RESEND
     await resend.emails.send({
-      from: "IRONIC Store <onboarding@resend.dev>",
-      to: email,
-      subject: "Your OTP for IRONIC Store",
-      text: `Your verification code is ${code}. It expires in 5 minutes.`,
-    });
+  from: "IRONIC Store <noreply@ironicgym.com>",
+  to: email,
+  subject: "Your OTP for IRONIC Store",
+  text: `Your verification code is ${code}. It expires in 5 minutes.`,
+});
+
 
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
@@ -171,11 +172,12 @@ router.post("/send-reset-otp", async (req, res) => {
 
     // ⭐ SEND EMAIL USING RESEND
     await resend.emails.send({
-      from: "IRONIC Store <onboarding@resend.dev>",
-      to: email,
-      subject: "Your Password Reset Code",
-      text: `Your password reset code is ${code}. It expires in 5 minutes.`,
-    });
+  from: "IRONIC Store <noreply@ironicgym.com>",
+  to: email,
+  subject: "Your Password Reset Code",
+  text: `Your password reset code is ${code}. It expires in 5 minutes.`,
+});
+
 
     res.json({ message: "Password reset OTP sent successfully" });
   } catch (err) {
@@ -225,16 +227,7 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 // --- SMTP TEST ROUTE ---
-router.get("/smtp-test", async (req, res) => {
-  try {
-    console.log("Testing SMTP connection...");
-    await transporter.verify();
-    res.send("SMTP is working ✔️");
-  } catch (error) {
-    console.error("SMTP ERROR:", error.message);
-    res.send("SMTP ERROR: " + error.message);
-  }
-});
+
 
 
 
