@@ -232,14 +232,18 @@ router.post("/reset-password", async (req, res) => {
     res.status(500).json({ message: "Password reset failed" });
   }
 });
+// --- SMTP TEST ROUTE ---
 router.get("/smtp-test", async (req, res) => {
   try {
+    console.log("Testing SMTP connection...");
     await transporter.verify();
-    res.send("SMTP is working");
-  } catch (e) {
-    res.send("SMTP ERROR: " + e.message);
+    res.send("SMTP is working ✔️");
+  } catch (error) {
+    console.error("SMTP ERROR:", error.message);
+    res.send("SMTP ERROR: " + error.message);
   }
 });
+
 
 
 module.exports = router;
