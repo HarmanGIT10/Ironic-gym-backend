@@ -14,7 +14,7 @@ const orderRoutes = require("./Routes/orderRoutes");
 
 // ✅ Middlewares
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+app.use(cors({ origin: "https://ironic-gym-frontend.vercel.app", credentials: true }));
 // ✅ MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
@@ -49,8 +49,8 @@ app.post("/api/create-checkout-session", async (req, res) => {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${process.env.FRONTEND_URL}/success`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+      success_url: "https://ironic-gym-frontend.vercel.app/success",
+      cancel_url: "https://ironic-gym-frontend.vercel.app/cancel",
     });
 
     res.json({ url: session.url });
