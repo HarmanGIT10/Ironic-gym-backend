@@ -1,22 +1,14 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const User = require("../models/User");
 const Otp = require("../models/Otp");
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ✅ Send OTP
 router.post("/send-otp", async (req, res) => {
@@ -26,14 +18,16 @@ router.post("/send-otp", async (req, res) => {
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // Save OTP in MongoDB
     await Otp.create({
       email,
       code,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await transporter.sendMail({
-      from: '"IRONIC" <' + process.env.EMAIL_USER + '>',
+    // ⭐ SEND EMAIL USING RESEND
+    await resend.emails.send({
+      from: "IRONIC Store <onboarding@resend.dev>",
       to: email,
       subject: "Your OTP for IRONIC Store",
       text: `Your verification code is ${code}. It expires in 5 minutes.`,
@@ -164,22 +158,20 @@ router.post("/send-reset-otp", async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email required" });
 
-    // 1. Check if user exists
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found with this email" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found with this email" });
 
-    // 2. Create and send OTP
     const code = Math.floor(100000 + Math.random() * 900000).toString();
+
     await Otp.create({
       email,
       code,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await transporter.sendMail({
-      from: '"IRONIC" <' + process.env.EMAIL_USER + '>',
+    // ⭐ SEND EMAIL USING RESEND
+    await resend.emails.send({
+      from: "IRONIC Store <onboarding@resend.dev>",
       to: email,
       subject: "Your Password Reset Code",
       text: `Your password reset code is ${code}. It expires in 5 minutes.`,
