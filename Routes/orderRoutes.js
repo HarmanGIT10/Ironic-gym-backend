@@ -176,33 +176,87 @@ router.get("/", protect, admin, async (req, res) => {
 // @route   PUT /api/orders/:id/status
 // @access  Private/Admin
 
-router.put("/:id/status", protect, admin, async (req, res) => {
+router.put("/:id/status", protect, admin, async (req, res) => { 
   try {
     const order = await Order.findById(req.params.id);
 
-    if (order) {
-      // --- THIS IS THE NEW LOGIC ---
-      // Check if a new status was sent
-      if (req.body.status) {
-        order.status = req.body.status;
-      }
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-      // Check if a new delivery date was sent
-      if (req.body.deliveredAt) {
-        order.deliveredAt = req.body.deliveredAt;
-      }
-      // --- END OF NEW LOGIC ---
+    // Update fields
+    if (req.body.status) order.status = req.body.status;
+    if (req.body.deliveredAt) order.deliveredAt = req.body.deliveredAt;
 
-      const updatedOrder = await order.save();
-      res.json(updatedOrder);
-    } else {
-      res.status(404).json({ message: "Order not found" });
+    const updatedOrder = await order.save();
+
+    // EMAIL TRIGGER STATUSES
+    const allowedStatuses = ["Accepted", "Dispatched", "Completed"];
+    const status = req.body.status;
+
+    if (allowedStatuses.includes(status)) {
+      const emailText = {
+        Accepted: "Your order has been accepted and will be prepared shortly.",
+        Dispatched: "Great news! Your order has been dispatched.",
+        Completed: "Your order has been successfully delivered!",
+      };
+
+     
+      const statusUpdateEmailHtml = `
+        <div style="background: #f5f7fa; padding: 40px 0; font-family: 'Segoe UI', sans-serif;">
+          <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+            <div style="background: linear-gradient(135deg, #1f2937, #111827); padding: 25px; text-align: center;">
+              <h2 style="color: #ffffff; margin: 0; font-size: 22px;">IRONIC Store — Order Update</h2>
+            </div>
+
+            <div style="padding: 25px; color: #333;">
+              <p style="font-size: 16px;">Hi <strong>${order.shippingAddress.name}</strong>,</p>
+              <p style="font-size: 15px;">We wanted to update you regarding your order.</p>
+
+              <div style="background: #eef4ff; padding: 15px 20px; border-left: 4px solid #3b82f6; border-radius: 6px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 17px;"><strong>Order Status:</strong> <span style="color: #1e40af;">${status}</span></p>
+              </div>
+
+              <p style="font-size: 15px; line-height: 1.6;">${emailText[status]}</p>
+
+              <div style="margin-top: 25px;">
+                <p style="margin: 6px 0;"><strong>Order ID:</strong> ${order._id}</p>
+                <p style="margin: 6px 0;"><strong>Name:</strong> ${order.shippingAddress.name}</p>
+              </div>
+
+              <div style="margin-top: 30px; text-align: center;">
+                <a href="#" style="background: #2563eb; padding: 12px 20px; color: white; text-decoration: none; border-radius: 8px;">View Order Details</a>
+              </div>
+
+              <p style="margin-top: 35px; font-size: 14px; color: #666; text-align: center;">If you have any questions, feel free to reply.</p>
+            </div>
+
+            <div style="background: #f3f4f6; padding: 15px; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #555;">© IRONIC Store • Automated Notification</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      try {
+        await resend.emails.send({
+          from: "IRONIC Store <noreply@ironicgym.com>",
+          to: order.shippingAddress.email,
+          subject: `Your Order Status: ${status}`,
+          html: statusUpdateEmailHtml,
+        });
+
+        console.log(`Status email sent (${status}) → ${order.shippingAddress.email}`);
+      } catch (emailErr) {
+        console.error("Status email error:", emailErr.message);
+      }
     }
+
+    res.json(updatedOrder);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error updating order status" });
+    res.status(500).json({ message: "Server error updating status" });
   }
 });
+
+
 
 module.exports = router;
 
