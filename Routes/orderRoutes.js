@@ -3,20 +3,11 @@ const router = express.Router();
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const { protect, admin } = require("../Middleware/authMiddleware");
-const nodemailer = require("nodemailer"); // 1. IMPORT NODEMAILER
+const { Resend } = require("resend"); 
 
 // 2. SET UP THE EMAIL TRANSPORTER
 // (This is copied from your authRoutes.js)
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 // @desc    Create a new order (the "receipt")
 // @route   POST /api/orders
 // @access  Private (for logged-in users)
@@ -131,12 +122,13 @@ router.post("/", protect, async (req, res) => {
       `;
 
       // 3.3 Send the email
-      await transporter.sendMail({
-        from: '"IRONIC Store" <' + process.env.EMAIL_USER + '>', // Use your .env email
-        to: createdOrder.shippingAddress.email, // Send to the customer's email
-        subject: `Your IRONIC Store Order Confirmation (#${createdOrder._id})`,
-        html: emailHtml,
-      });
+     await resend.emails.send({
+  from: "IRONIC Store <noreply@ironicgym.com>",
+  to: createdOrder.shippingAddress.email,
+  subject: `Your IRONIC Store Order Confirmation (#${createdOrder._id})`,
+  html: emailHtml,
+});
+
 
       console.log("Confirmation email sent to", createdOrder.shippingAddress.email);
     } catch (emailError) {
