@@ -223,7 +223,7 @@ router.put("/:id/status", protect, admin, async (req, res) => {
               </div>
 
               <div style="margin-top: 30px; text-align: center;">
-                <a href="#" style="background: #2563eb; padding: 12px 20px; color: white; text-decoration: none; border-radius: 8px;">View Order Details</a>
+                <a href="https://ironicgym.com/order/${order._id}" style="background: #2563eb; padding: 12px 20px; color: white; text-decoration: none; border-radius: 8px;">View Order Details</a>
               </div>
 
               <p style="margin-top: 35px; font-size: 14px; color: #666; text-align: center;">If you have any questions, feel free to reply.</p>
