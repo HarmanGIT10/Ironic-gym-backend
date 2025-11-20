@@ -47,7 +47,7 @@ router.delete("/:id", protect, admin, async (req, res) => {
 router.put("/:id", protect, admin, async (req, res) => {
   try {
     const {
-      name, price, brand, quantity, category, isBestSeller,mainImageUrl, cartImageUrl} = req.body;
+      name, price, brand, quantity, category, isBestSeller,mainImageUrl, cartImageUrl,description} = req.body;
 
     const product = await Product.findById(req.params.id);
 
@@ -61,6 +61,7 @@ router.put("/:id", protect, admin, async (req, res) => {
       product.isBestSeller = isBestSeller; // Note: not "||" - we need to be able to set it to false
       product.mainImageUrl = mainImageUrl || product.mainImageUrl;
       product.cartImageUrl = cartImageUrl || product.cartImageUrl;
+      product.description = description || product.description;
       const updatedProduct = await product.save();
       res.json(updatedProduct);
     } else {
