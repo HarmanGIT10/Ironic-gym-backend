@@ -164,7 +164,7 @@ router.get("/myorders", protect, async (req, res) => {
 // @access  Private/Admin
 router.get("/", protect, admin, async (req, res) => {
   try {
-    const orders = await Order.find({}).populate("user", "name email").sort({ createdAt: -1 });
+    const orders = await Order.find({}).populate("user", "name email phone countryCode").sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     console.error(error);
