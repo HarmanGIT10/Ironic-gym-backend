@@ -15,7 +15,10 @@ router.post("/send-otp", async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email required" });
-
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists. Please Sign In instead." });
+    }
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Save OTP in MongoDB
