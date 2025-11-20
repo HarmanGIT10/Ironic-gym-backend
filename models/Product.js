@@ -6,6 +6,10 @@ const productSchema = new mongoose.Schema({
   price: Number, // This is price in CENTS
   brand: String,
   size: String,
+  description: { 
+    type: String, 
+    default: "No description available." 
+  },
   quantity: {
     type: Number,
     required: true,
