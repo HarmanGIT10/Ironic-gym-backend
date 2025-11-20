@@ -47,7 +47,7 @@ router.post("/send-otp", async (req, res) => {
 // ✅ Verify OTP and create user (Sign Up)
 router.post("/verify-otp", async (req, res) => {
   try {
-    const { name, email, password, phone, otp } = req.body;
+    const { name, email, password, phone, countryCode, otp } = req.body;
     const otpRecord = await Otp.findOne({ email, code: otp });
 
     if (!otpRecord) return res.status(400).json({ message: "Invalid OTP" });
@@ -67,13 +67,14 @@ router.post("/verify-otp", async (req, res) => {
       email,
       password: hashedPassword,
       phone,
+      countryCode,
     });
 
     const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: "1d" });
 
     res.json({
       message: "Account created successfully",
-      user: { id: newUser._id, name: newUser.name, email: newUser.email },
+      user: { id: newUser._id, name: newUser.name, email: newUser.email ,fullPhone: newUser.fullPhone},
       token,
     });
   } catch (err) {
