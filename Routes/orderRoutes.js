@@ -31,12 +31,7 @@ router.post("/", protect, async (req, res) => {
     const order = new Order({
       user: req.user._id,
       orderItems: orderItems.map(item => ({
-        name: item.name,
-        brand: item.brand,
-        quantity: item.quantity,
-        price: item.price,
-        // This line handles the name mismatch:
-        image: item.cartImageUrl || item.image, 
+         ...item, 
         product: item.product,
       })),
       shippingAddress: shippingAddress,
