@@ -18,13 +18,26 @@ router.post("/", protect, async (req, res) => {
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ message: "No order items" });
     }
+    for (const item of orderItems) {
+      const product = await Product.findById(item.product);
+      if (product) {
+        // Subtract the ordered quantity from the available stock
+        product.quantity = product.quantity - item.quantity;
+        await product.save();
+      }
+    }
 
     // Create the new order in the database
     const order = new Order({
       user: req.user._id,
       orderItems: orderItems.map(item => ({
-        ...item,
-        product: item.product, // 'product' is the _id from your cart
+        name: item.name,
+        brand: item.brand,
+        quantity: item.quantity,
+        price: item.price,
+        // This line handles the name mismatch:
+        image: item.cartImageUrl || item.image, 
+        product: item.product,
       })),
       shippingAddress: shippingAddress,
       totalPrice: totalPrice,
