@@ -36,7 +36,24 @@ app.post("/api/create-checkout-session", async (req, res) => {
     if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: "No products provided." });
     }
+    for (const item of products) {
+      // 1. Get the real product from DB
+      const productInDb = await Product.findById(item.id);
 
+      // 2. If product doesn't exist
+      if (!productInDb) {
+        return res.status(404).json({ error: `Product not found: ${item.name}` });
+      }
+
+      // 3. THE IMPORTANT PART: Check Stock
+      if (productInDb.quantity < item.quantity) {
+        // If user wants 10 but we have 5, STOP HERE.
+        // Return a 400 error so the Frontend knows to show a message.
+        return res.status(400).json({ 
+          error: `Sorry, we only have ${productInDb.quantity} left of "${productInDb.name}". Please update your cart.` 
+        });
+      }
+    }
     const lineItems = products.map((product) => ({
       price_data: {
         currency: "cad",
