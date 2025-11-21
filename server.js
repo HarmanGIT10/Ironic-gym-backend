@@ -3,7 +3,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
-
+// Make sure the path points to your actual Product model file
+const Product = require("./models/Product");
 const app = express();
 
 // ✅ Import routes
