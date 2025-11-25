@@ -125,28 +125,49 @@ router.post("/google-signin", async (req, res) => {
   try {
     const { name, email, googleId } = req.body;
 
-    // 1. Find or create the user in your database
-    const user = await User.findOneAndUpdate(
-      { googleId: googleId }, // Find user by their unique Google ID
-      {
-        $set: { // Set/update these fields
-          name: name,
-          email: email,
-          googleId: googleId,
-        },
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    // 1. Look for the email directly (this finds your "orphaned" account)
+    let user = await User.findOne({ email: email });
 
-    // 2. Create a token for this user
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1d" });
+    if (user) {
+      // 2. Found the user! Now ensure the Google ID is linked correctly.
+      if (user.googleId !== googleId) {
+        user.googleId = googleId;
+        await user.save();
+        console.log("Fixed broken Google link for existing user.");
+      }
 
-    // 3. Send back the token and user data
-    res.json({
-      message: "Google sign-in successful",
-      user: { id: user._id, name: user.name, email: user.email },
-      token,
-    });
+      const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1d" });
+
+      return res.json({
+        message: "Google sign-in successful",
+        user: { id: user._id, name: user.name, email: user.email },
+        token,
+        isAdmin: user.isAdmin,
+      });
+    } 
+    
+    // 3. If user truly doesn't exist, create them
+    else {
+      // Generate a random password to satisfy 'required: true' in your schema
+      const dummyPassword = await bcrypt.hash(Math.random().toString(36), 10);
+
+      const newUser = await User.create({
+        name: name,
+        email: email,
+        googleId: googleId,
+        password: dummyPassword, 
+      });
+
+      const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: "1d" });
+
+      return res.status(201).json({
+        message: "Google sign-in successful",
+        user: { id: newUser._id, name: newUser.name, email: newUser.email },
+        token,
+        isAdmin: false,
+      });
+    }
+
   } catch (err) {
     console.error("Google sign-in error:", err.message);
     res.status(500).json({ message: "Server error during Google sign in" });
