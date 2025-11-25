@@ -26,7 +26,15 @@ router.post("/", protect, async (req, res) => {
         await product.save();
       }
     }
-
+    const formatGitHubUrl = (url) => {
+      if (url && url.includes("github.com") && url.includes("/blob/")) {
+        return url
+          .replace("github.com", "raw.githubusercontent.com")
+          .replace("/blob/", "/")
+          .split("?")[0]; // Removes ?raw=true
+      }
+      return url;
+    };
     // Create the new order in the database
     const order = new Order({
       user: req.user._id,
@@ -42,17 +50,18 @@ router.post("/", protect, async (req, res) => {
     });
 
     const createdOrder = await order.save();
-
+    const emailImage = formatGitHubUrl(item.cartImageUrl);
     // --- 3. SEND CONFIRMATION EMAIL ---
     try {
       // 3.1 Create the product list HTML
       const itemsHtml = createdOrder.orderItems
+        
   .map(
     (item) => `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #ddd;">
           <img 
-            src="${item.cartImageUrl}"
+            src="${emailImage}"
             alt="${item.name}" 
             width="60" 
             style="border-radius: 4px; border: 1px solid #eee;"
