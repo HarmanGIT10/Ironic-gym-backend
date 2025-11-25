@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const User = require("../models/User");
 const { protect, admin } = require("../Middleware/authMiddleware");
 const { Resend } = require("resend"); 
 
@@ -154,6 +155,26 @@ router.post("/", protect, async (req, res) => {
 
 
       console.log("Confirmation email sent to", createdOrder.shippingAddress.email);
+      // ... (after the code that sends email to customer) ...
+
+      // --- 4. SEND NOTIFICATION TO ADMINS ---
+      // Find all users who are admins
+      const adminUsers = await User.find({ isAdmin: true });
+      
+      // Extract their emails into a list
+      const adminEmails = adminUsers.map((user) => user.email);
+
+      // Send the email if admins exist
+      if (adminEmails.length > 0) {
+        await resend.emails.send({
+          from: "IRONIC Admin <noreply@ironicgym.com>",
+          to: adminEmails, 
+          // Subject Example: "🔔 NEW ORDER: Harman spent $50.00"
+          subject: `🔔 NEW ORDER: ${createdOrder.shippingAddress.name} spent $${(createdOrder.totalPrice / 100).toFixed(2)}`,
+          html: adminEmailHtml, // We re-use the same receipt HTML so you see exactly what they bought
+        });
+        console.log("Admin notification sent to:", adminEmails);
+      }
     } catch (emailError) {
       console.error("Error sending confirmation email:", emailError.message);
       // We don't want to stop the order, so we just log the email error
