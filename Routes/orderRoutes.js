@@ -18,28 +18,32 @@ router.post("/", protect, async (req, res) => {
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ message: "No order items" });
     }
+
+    // 1. UPDATE STOCK QUANTITY
     for (const item of orderItems) {
       const product = await Product.findById(item.product);
       if (product) {
-        // Subtract the ordered quantity from the available stock
         product.quantity = product.quantity - item.quantity;
         await product.save();
       }
     }
+
+    // --- HELPER FUNCTION FOR IMAGES ---
     const formatGitHubUrl = (url) => {
       if (url && url.includes("github.com") && url.includes("/blob/")) {
         return url
           .replace("github.com", "raw.githubusercontent.com")
           .replace("/blob/", "/")
-          .split("?")[0]; // Removes ?raw=true
+          .split("?")[0];
       }
       return url;
     };
-    // Create the new order in the database
+
+    // 2. SAVE ORDER TO DB
     const order = new Order({
       user: req.user._id,
-      orderItems: orderItems.map(item => ({
-         ...item, 
+      orderItems: orderItems.map((item) => ({
+        ...item,
         product: item.product,
       })),
       shippingAddress: shippingAddress,
@@ -50,35 +54,37 @@ router.post("/", protect, async (req, res) => {
     });
 
     const createdOrder = await order.save();
-    const emailImage = formatGitHubUrl(item.cartImageUrl);
+
     // --- 3. SEND CONFIRMATION EMAIL ---
     try {
       // 3.1 Create the product list HTML
       const itemsHtml = createdOrder.orderItems
-        
-  .map(
-    (item) => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #ddd;">
-          <img 
-            src="${emailImage}"
-            alt="${item.name}" 
-            width="60" 
-            style="border-radius: 4px; border: 1px solid #eee;"
-          />
-        </td>
+        .map((item) => {
+          // ✅ FIX: Calculate the image URL INSIDE the loop for each specific item
+          const emailImage = formatGitHubUrl(item.cartImageUrl);
 
-        <td style="padding: 8px; border-bottom: 1px solid #ddd;">
-          ${item.name} (x${item.quantity})
-        </td>
-
-        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">
-          $${((item.price * item.quantity) / 100).toFixed(2)}
-        </td>
-      </tr>
-    `
-  )
-  .join("");
+          return `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">
+                <img 
+                  src="${emailImage}" 
+                  alt="${item.name}" 
+                  width="60" 
+                  style="border-radius: 4px; border: 1px solid #eee;"
+                />
+              </td>
+      
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">
+                ${item.name} (x${item.quantity})
+              </td>
+      
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">
+                $${((item.price * item.quantity) / 100).toFixed(2)}
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
 
 
       // 3.2 Create the full email HTML
